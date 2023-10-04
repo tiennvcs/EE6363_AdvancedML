@@ -1,6 +1,6 @@
 # EE6363 Advanced Machine Learning - Fall 2023
 
-**Code for running result (generating charts) in homework 2**
+**Code for running results (generating charts) in homework 2**
 
 - Problem 1: [Low noise and high noise](./HW2/P1/HW_2_AML_P1.ipynb)
 - Problem 2: [Feature/Input/Output Correlations](./HW2/P2/HW_2_AML_P2.ipynb)
