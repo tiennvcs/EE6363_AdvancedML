@@ -1,0 +1,14 @@
+# EE6363 Advanced Machine Learning - Fall 2023
+
+**Code for running result (generating charts) in homework 2**
+
+- Problem 1: [Low noise and high noise](./HW2/P1/HW_2_AML_P1.ipynb)
+- Problem 2: [Feature/Input/Output Correlations](./HW2/P2/HW_2_AML_P2.ipynb)
+- Problem 3: [Univariate Models](./HW2/P3/HW_2_AML_P3.ipynb)
+- Problem 4: [Bivariate Linear](./HW2/P4/HW_2_AML_P4.ipynb)
+- Problem 5: [Bivariate Non-Linear](./HW2/P5/HW_2_AML_P5.ipynb)
+
+**Team 6:**
+- Rakib Ul Haque
+- Andrew Laramore
+- Tien Nguyen
