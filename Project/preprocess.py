@@ -288,6 +288,7 @@ with open(filename, "r") as password_dump:
         current = Password(line.strip(), norder)
         passwords.append(current.get_array())
 
+        
 # There are no tuples in JSON so this saves as lists of lists
 # print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
 # print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
@@ -300,5 +301,3 @@ with open("output.csv", "w") as output_file:
         for lab, feat in dic:
             print(f"{feat} : {lab}")
             output_file.write(f"{feat},{lab}\n")
-
-# Or do something else
