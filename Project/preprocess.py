@@ -220,13 +220,17 @@ with open(filename, 'r') as password_dump:
         current = Password(line.strip(), norder)
         list_builder = []
         for seg in current.password_segments:
-           list_builder.append(seg.processed_segment)
+            list_builder.append(seg.processed_segment)
         passwords[line.strip()] = list_builder
-
+        
+       
+        
 # There are no tuples in JSON so this saves as lists of lists
 #print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
 print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
 #with open(f"{filename}.pkl", 'wb') as pickle_file:
 #    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
-
+output_file = "./output/encoded_password.json"
+with open(output_file, 'w') as f:
+    json.dump(passwords, f, indent=4, ensure_ascii=False, sort_keys=True)
 # Or do something else
