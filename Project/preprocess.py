@@ -5,8 +5,8 @@ import string, json, pickle
 
 class Password_Segment:
     keyboard_coordinates = {
-        #"`": (-1, 0),
-        #"~": (-1, 0),
+        # "`": (-1, 0),
+        # "~": (-1, 0),
         "1": (1, 1),
         "!": (1, 1),
         "2": (1, 2),
@@ -76,33 +76,41 @@ class Password_Segment:
     }
 
     def __init__(self, segment, position, streak, suffix=[]):
-        if __debug__: print(f"Creating segment {segment}")
+        if __debug__:
+            print(f"Creating segment {segment}")
         self.segment = segment
-        if __debug__: print(f"Creating position {position}")
+        if __debug__:
+            print(f"Creating position {position}")
         self.position = position
-        if __debug__: print(f"Creating streak {streak}")
+        if __debug__:
+            print(f"Creating streak {streak}")
         self.streak = streak
         self.processed_segment = []
         for c in self.segment:
-            if c == '😀':
-                self.processed_segment.extend([0,0,0,0])
+            if c == "😀":
+                self.processed_segment.extend([0, 0, 0, 0])
             else:
-                if __debug__: print(f"Adding character {c}")
+                if __debug__:
+                    print(f"Adding character {c}")
                 entry = self.get_type_and_rank(c) + self.get_keyboard_coordinate(c)
-                if __debug__: print(f"{c} processed to {entry}")
+                if __debug__:
+                    print(f"{c} processed to {entry}")
                 for num in entry:
                     self.processed_segment.append(num)
-        if __debug__: print(f"Length information is ({self.position}, {self.streak})")
+        if __debug__:
+            print(f"Length information is ({self.position}, {self.streak})")
         self.processed_segment.extend(suffix)
         self.processed_segment.append(self.position)
         self.processed_segment.append(self.streak)
-        if __debug__: print(f"processed_segment is now {self.processed_segment}")
+        if __debug__:
+            print(f"processed_segment is now {self.processed_segment}")
 
     @staticmethod
     def get_type_and_rank(character):
         char_class = None
         rank = None
-        if __debug__: print(f"Looking for character {character} of type {type(character)}")
+        if __debug__:
+            print(f"Looking for character {character} of type {type(character)}")
         if (rank := string.ascii_lowercase.find(character)) > -1:
             char_class = 1
         elif (rank := string.ascii_uppercase.find(character)) > -1:
@@ -164,7 +172,7 @@ class Password:
         streak = tuple(
             self.password[0]
         )  # The first char in the first streak is the 0th letter of the password
-        for i in range(1,len(class_list)):
+        for i in range(1, len(class_list)):
             if class_list[i] == last_class:
                 streak = streak + tuple(
                     self.password[i]
@@ -174,7 +182,9 @@ class Password:
                     streak
                 )  # If it's different append the streak as is to the streak list...
                 streak = tuple(self.password[i])  # ... and create a new streak.
-                last_class = class_list[i] # Reset last_class so we can restart the streak
+                last_class = class_list[
+                    i
+                ]  # Reset last_class so we can restart the streak
 
     def _find_streaks(self, index):
         """
@@ -182,12 +192,15 @@ class Password:
         """
         position = 0
         for stk in self.streaks:
-            if __debug__: print(stk)
+            if __debug__:
+                print(stk)
             if (len(stk) + position) <= index:
-                if __debug__: print(f"Position {position} is less than index {index}")
+                if __debug__:
+                    print(f"Position {position} is less than index {index}")
                 position += len(stk)
-                if __debug__: print(f"Moving to position {position}")
-        return (index - position + 1)
+                if __debug__:
+                    print(f"Moving to position {position}")
+        return index - position + 1
 
     def _create_segments(self):
         if len(self.password) < self.norder:
@@ -199,60 +212,89 @@ class Password:
 
         # Add segments of n-order length from beginning to end of password
         while end < len(self.password):
-            if __debug__: print(f"Length of password is {len(self.password)}")
-            if __debug__: print(f"Looping again with {begin} and {end}")
+            if __debug__:
+                print(f"Length of password is {len(self.password)}")
+            if __debug__:
+                print(f"Looping again with {begin} and {end}")
             if begin < 0:
-                prefix = '😀' * abs(begin)
-                next_char = self.password[-1] if begin == -1 else self.password[:begin + 1][-1]
+                prefix = "😀" * abs(begin)
+                next_char = (
+                    self.password[-1] if begin == -1 else self.password[: begin + 1][-1]
+                )
                 word = prefix + self.password[:begin]
-                encoded_next_char = [element for tupl in (Password_Segment.get_type_and_rank(next_char), Password_Segment.get_keyboard_coordinate(next_char)) for element in tupl]
+                encoded_next_char = [
+                    element
+                    for tupl in (
+                        Password_Segment.get_type_and_rank(next_char),
+                        Password_Segment.get_keyboard_coordinate(next_char),
+                    )
+                    for element in tupl
+                ]
                 if begin == (0 - len(self.password)):
                     next_segment = Password_Segment(word, 0, 0).processed_segment
                 else:
-                    next_segment = Password_Segment(word, len(self.password[:begin]) - 1, self._find_streaks(end - 1)).processed_segment
+                    next_segment = Password_Segment(
+                        word,
+                        len(self.password[:begin]) - 1,
+                        self._find_streaks(end - 1),
+                    ).processed_segment
                 self.feature_label.append((encoded_next_char, next_segment))
             elif len(self.password) > norder:
                 next_char = self.password[end]
-                encoded_next_char = [element for tupl in (Password_Segment.get_type_and_rank(next_char), Password_Segment.get_keyboard_coordinate(next_char)) for element in tupl]
-                next_segment = Password_Segment(self.password[begin:end], end, self._find_streaks(end - 1)).processed_segment
+                encoded_next_char = [
+                    element
+                    for tupl in (
+                        Password_Segment.get_type_and_rank(next_char),
+                        Password_Segment.get_keyboard_coordinate(next_char),
+                    )
+                    for element in tupl
+                ]
+                next_segment = Password_Segment(
+                    self.password[begin:end], end, self._find_streaks(end - 1)
+                ).processed_segment
                 self.feature_label.append((encoded_next_char, next_segment))
             begin += 1
             end += 1
             if __debug__:
                 print(f"Now begin is {begin} and end is {end}")
 
-        self.feature_label.append((
+        self.feature_label.append(
+            (
                 [-1, -1, -1, -1],
-                Password_Segment(self.password[begin:end], end, self._find_streaks(end - 1)).processed_segment
-        ))
+                Password_Segment(
+                    self.password[begin:end], end, self._find_streaks(end - 1)
+                ).processed_segment,
+            )
+        )
 
     def get_array(self):
         return self.feature_label
 
 
-#password = input("password: ")
+# password = input("password: ")
 filename = input("filename: ")
 norder = int(input("n-order: "))
 
-#test = Password(password, norder)
-#for seg in test.password_segments:
+# test = Password(password, norder)
+# for seg in test.password_segments:
 #    print(seg.processed_segment)
 #    print(json.dumps(seg.processed_segment))
 
 passwords = []
-with open(filename, 'r') as password_dump:
+with open(filename, "r") as password_dump:
     for line in password_dump:
-        if __debug__: print(f"Adding password: {line.strip()}")
+        if __debug__:
+            print(f"Adding password: {line.strip()}")
         current = Password(line.strip(), norder)
         passwords.append(current.get_array())
 
 # There are no tuples in JSON so this saves as lists of lists
-#print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
-#print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
-#with open(f"{filename}.pkl", 'wb') as pickle_file:
+# print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
+# print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
+# with open(f"{filename}.pkl", 'wb') as pickle_file:
 #    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
-#print(passwords)
-with open('output.csv', 'w') as output_file:
+# print(passwords)
+with open("output.csv", "w") as output_file:
     output_file.write("features,labels\n")
     for dic in passwords:
         for lab, feat in dic:
