@@ -1,5 +1,4 @@
 import string, json, pickle
-import numpy as np
 
 # ( type , rank , row , column )
 
