@@ -253,8 +253,11 @@ with open(filename, 'r') as password_dump:
 #with open(f"{filename}.pkl", 'wb') as pickle_file:
 #    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
 #print(passwords)
-for dic in passwords:
-    for lab, feat in dic:
-        print(f"{feat} : {lab}")
+with open('output.csv', 'w') as output_file:
+    output_file.write("features,labels\n")
+    for dic in passwords:
+        for lab, feat in dic:
+            print(f"{feat} : {lab}")
+            output_file.write(f"{feat},{lab}\n")
 
 # Or do something else
