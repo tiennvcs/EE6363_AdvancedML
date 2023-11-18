@@ -224,15 +224,21 @@ class Password:
                     self.password[-1] if begin == -1 else self.password[: begin + 1][-1]
                 )
                 word = prefix + self.password[:begin]
+                if len(word) > self.norder:
+                    word = word[:self.norder]
                 encoded_next_char = Password_Segment.get_type_and_rank(next_char) + Password_Segment.get_keyboard_coordinate(next_char)
                 if begin == (0 - len(self.password)):
                     next_segment = Password_Segment(word, 0, 0).processed_segment
+                    while len(next_segment) < 7:
+                        next_segment = [(0,0,0,0)].extend(next_segment)
                 else:
                     next_segment = Password_Segment(
                         word,
                         len(self.password[:begin]) - 1,
                         self._find_streaks(end - 1),
                     ).processed_segment
+                    while len(next_segment) < 7:
+                        next_segment = [(0,0,0,0)].extend(next_segment)
                 self.feature_label.append((encoded_next_char, next_segment))
             elif len(self.password) > self.norder:
                 next_char = self.password[end]
@@ -240,6 +246,8 @@ class Password:
                 next_segment = Password_Segment(
                     self.password[begin:end], end, self._find_streaks(end - 1)
                 ).processed_segment
+                while len(next_segment) < 7:
+                    next_segment = [(0,0,0,0)].extend(next_segment)
                 self.feature_label.append((encoded_next_char, next_segment))
             begin += 1
             end += 1
@@ -305,6 +313,7 @@ with open(args.input, "rb") as password_dump:
         except TypeError:
             continue
 
+<<<<<<< Updated upstream
 with open(f"feature_{args.output}", 'w') as output_file:
     print(f"Writing features to features_{args.output}")
     json.dump(features, output_file, indent=4, ensure_ascii=False)
@@ -313,6 +322,26 @@ with open(f"feature_{args.output}", 'w') as output_file:
 with open(f"label_{args.output}", 'w') as output_file:
     print(f"Writing labels to labels_{args.output}")
     json.dump(labels, output_file, indent=4, ensure_ascii=False)
+=======
+<<<<<<< Updated upstream
+with open(f"{args.output}.features", 'w') as output_file:
+    print(f"Writing features to {args.output}.features")
+    output_file.write(json.dumps(features))
+
+with open(f"{args.output}.labels", 'w') as output_file:
+    print(f"Writing labels to {args.output}.labels")
+    output_file.write(json.dumps(labels))
+=======
+with open(f"{args.output}.feature", 'w') as output_file:
+    print(f"Writing features to features_{args.output}")
+    json.dump(features, output_file, indent=4, ensure_ascii=True)
+    # output_file.write(json.dumps(features))
+
+with open(f"{args.output}.label", 'w') as output_file:
+    print(f"Writing labels to labels_{args.output}")
+    json.dump(labels, output_file, indent=4, ensure_ascii=True)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 # There are no tuples in JSON so this saves as lists of lists
 # print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
 # print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
