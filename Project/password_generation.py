@@ -3,6 +3,7 @@ import json
 import os
 import time
 from joblib import load
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 from preprocess.preprocess import Password
 import numpy as np
@@ -40,11 +41,17 @@ class PasswordGenerator:
         print(self._model)
 
     def one_step_inference(self, current_str):
-        password = self._preprocessor(current_str, 6)
-        input_encoding = password.get_array()[-1][-1]
-        if len(input_encoding) < 7:
-            input_encoding = [(0, 0, 0, 0)]*(7-len(input_encoding)) + input_encoding
-        flatten_encoding = np.array([x for sub_encoding in input_encoding for x in sub_encoding]).reshape(1, -1)
+        """
+            current_str <- "abc1234"
+        """
+        if current_str != "":
+            password = self._preprocessor(current_str, 6)
+            input_encoding = password.get_array()[-1][-1]
+            if len(input_encoding) < 7:
+                input_encoding = [(0, 0, 0, 0)]*(7-len(input_encoding)) + input_encoding
+            flatten_encoding = np.array([x for sub_encoding in input_encoding for x in sub_encoding]).reshape(1, -1)
+        else:
+            flatten_encoding = np.zeros(shape=(1, 26))
         next_char_int = self._model.predict(flatten_encoding)[-1]
         next_char = self._label_map_invert[str(next_char_int)]
         return next_char
@@ -80,14 +87,15 @@ class PasswordGenerator:
 def load_entire_dataset(data_file: str):
     with open(data_file, 'r', encoding='utf-8') as f:
         df = pd.read_csv(f)
-    filter_X, filter_y = [], []
+    X, y = [], []
     for _, col in df.iterrows():
-        if type(col['input_prefix']) == str:
-            if len(col['input_prefix']) <= 3:
-                continue
-            filter_X.append(col['input_prefix'])
-            filter_y.append(col['entire_pass'])
-    return filter_X, filter_y
+        # if type(col['input_prefix']) == str:
+        if type(col['input_prefix']) is float:
+            X.append("")
+        else:    
+            X.append(col['input_prefix'])
+        y.append(col['entire_pass'])
+    return X, y
 
 def get_argument():
     args = argparse.ArgumentParser(description="Data processing to get feature")
@@ -101,12 +109,24 @@ def get_argument():
     return vars(args.parse_args())
 
 
-def metric(y_pred, y_true):
+def metric_acc(y_pred, y_true):
     count = 0
     for y1, y2 in zip(y_pred, y_true):
         if y1 == y2:
             count += 1
     return count/len(y_pred)
+
+def metric_acc2(y_pred, y_true):
+    """
+        y_pred = ["123213", "2312"]
+        y_true = ["123213", "2323122"]
+    """
+    count = 0
+    for y in y_pred:
+        if y in y_true:
+            count += 1
+    return count/len(y_true)
+
 
 def evaluation(args):
     # Initialize password generator model
@@ -120,13 +140,31 @@ def evaluation(args):
     X, y_true = load_entire_dataset(data_file=args['test'])
 
     # Make inference
-    output = generator.inference(inputs=X)
-    y_pred = output['y_pred']
-    inference_speed = output['speed_inference']
+    L = 5
+    success_rate = []
+    total_guess = []
+    y_pred_total = []
+    for _ in range(1, L+1):
+        output = generator.inference(inputs=X)
+        y_pred = set(output['y_pred'])
+        y_pred_total += list(y_pred)
+        y_pred_total = list(set(y_pred_total))
+        print("Length of current prediction set:", len(y_pred_total))
+        input()
+        acc = metric_acc2(y_pred=y_pred_total, y_true=y_true)
+    
+        total_guess.append(len(y_pred_total)) # ->x
+        success_rate.append(acc)              # ->y
+        # Perform evaluation
+        print("The successful rate is: {}%".format(np.round(acc*100, 4)))
+            # inference_speed = output['speed_inference']   
 
-    # Perform evaluation
-    acc = metric(y_pred=y_pred, y_true=y_true)
-    print("The accuracy is: {}%".format(np.round(acc*100, 4)))
+    # Plot 
+    fig, ax = plt.subplots()
+    ax.plot(total_guess, success_rate, label="Successful rate")
+    ax.legend(loc='best')
+    plt.show()
+    fig.savefig(args['output_dir'], os.path.basename(args['test']).split(".")[0]+".pdf")
 
     # Save prediction and true label
     df = pd.DataFrame({
