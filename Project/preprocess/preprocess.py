@@ -313,38 +313,26 @@ with open(args.input, "rb") as password_dump:
         except TypeError:
             continue
 
-<<<<<<< Updated upstream
-with open(f"feature_{args.output}", 'w') as output_file:
-    print(f"Writing features to features_{args.output}")
-    json.dump(features, output_file, indent=4, ensure_ascii=False)
-    # output_file.write(json.dumps(features))
-
-with open(f"label_{args.output}", 'w') as output_file:
-    print(f"Writing labels to labels_{args.output}")
-    json.dump(labels, output_file, indent=4, ensure_ascii=False)
-=======
-<<<<<<< Updated upstream
-with open(f"{args.output}.features", 'w') as output_file:
-    print(f"Writing features to {args.output}.features")
-    output_file.write(json.dumps(features))
-
-with open(f"{args.output}.labels", 'w') as output_file:
-    print(f"Writing labels to {args.output}.labels")
-    output_file.write(json.dumps(labels))
-=======
 with open(f"{args.output}.feature", 'w') as output_file:
-    print(f"Writing features to features_{args.output}")
+    print(f"Writing features to {args.output}.features")
     json.dump(features, output_file, indent=4, ensure_ascii=True)
     # output_file.write(json.dumps(features))
 
 with open(f"{args.output}.label", 'w') as output_file:
-    print(f"Writing labels to labels_{args.output}")
+    print(f"Writing labels to {args.output}.labels")
     json.dump(labels, output_file, indent=4, ensure_ascii=True)
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 # There are no tuples in JSON so this saves as lists of lists
 # print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
 # print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
 # with open(f"{filename}.pkl", 'wb') as pickle_file:
 #    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
 # print(passwords)
+
+with open(f"{args.output}.csv" ,'w') as csv_file:
+    csv_file.write("features|labels\n")
+    for k in features:
+        for i in range(len(features[k])):
+            unpack_tuple = [element for tupl in features[k][i] for element in tupl]
+            feat_str = ', '.join(str(x) for x in unpack_tuple)
+            lab_str = ', '.join(str(x) for x in labels[k][i])
+            csv_file.write("[" + feat_str + "]" + " | " + "[" + lab_str + "]\n")
