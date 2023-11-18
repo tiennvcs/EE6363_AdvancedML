@@ -1,5 +1,7 @@
 import argparse
 import json
+import os
+import time
 from joblib import load
 from tqdm import tqdm
 from preprocess.preprocess import Password
@@ -60,6 +62,7 @@ class PasswordGenerator:
 
 
     def inference(self, inputs: List[str]):
+        start_time = time.time()
         y_pred = []
         for input_str in tqdm(inputs, desc="Inference each password ...", total=len(inputs)):
             current_str = input_str
@@ -70,7 +73,8 @@ class PasswordGenerator:
                     break
                 current_str = current_str + next_char
             y_pred.append(current_str)
-        return y_pred
+        speed_inference = (time.time() - start_time)/len(inputs)
+        return {'y_pred': y_pred, 'speed_inference': speed_inference} 
 
 
 def load_entire_dataset(data_file: str):
@@ -93,6 +97,7 @@ def get_argument():
                       default="/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping_invert.json")
     args.add_argument("--model_path", required=True, type=str)
     args.add_argument("--test", required=True, type=str, help="The path of testing dataset.")
+    args.add_argument("--output_dir", default="output/", type=str, help="The output directory containing evaluation results and predictions.")
     return vars(args.parse_args())
 
 
@@ -115,12 +120,27 @@ def evaluation(args):
     X, y_true = load_entire_dataset(data_file=args['test'])
 
     # Make inference
-    y_pred = generator.inference(inputs=X)
+    output = generator.inference(inputs=X)
+    y_pred = output['y_pred']
+    inference_speed = output['speed_inference']
 
     # Perform evaluation
     acc = metric(y_pred=y_pred, y_true=y_true)
-    print("The accuracy is: {}%".format(np.round(acc*100, 2)))
+    print("The accuracy is: {}%".format(np.round(acc*100, 4)))
 
+    # Save prediction and true label
+    df = pd.DataFrame({
+        'x': X,
+        'y_true': y_true,
+        'y_pred': y_pred
+    })
+    saving_file = os.path.join(args['output_dir'], "pred_"+os.path.basename(args['test']))
+    df.to_csv(saving_file, index=False)
+
+    # Save metric evaluation
+    saving_score_file = os.path.join(args['output_dir'], 'score.json')
+    with open(saving_score_file, 'w', encoding='utf-8') as f:
+        json.dump({'acc': acc, 'speed': inference_speed, 'total_samples': len(X)}, f, indent=4, ensure_ascii=False)
     # Plot curve
 
 
