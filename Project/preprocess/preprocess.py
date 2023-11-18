@@ -140,7 +140,6 @@ class Password:
     """
 
     def __init__(self, password, norder):
-        self.password_segments = []
         self.password = password
         self.norder = norder
         self.feature_label = []
@@ -203,136 +202,46 @@ class Password:
                 if __debug__:
                     print(f"Moving to position {position}")
         return index - position + 1
+    
+    @staticmethod
+    def _scroll(string, n):
+        lst = []
+        for i in range(len(string)):
+            addition  = string[:i+1]
+            lst.append(addition[-n:])
+        if __debug__: print(lst)
+        return lst
 
     def _create_segments(self):
-        if len(self.password) < self.norder:
-            begin = 0 - len(self.password)
-        else:
-            begin = 0 - self.norder  # Start at the 0th character of the password
-        end = 0  # End such that the segment is of length n-order
-        password_segments = []
+        pass_chunks = self._scroll(self.password, self.norder)
+        encoded_next_char = Password_Segment.get_type_and_rank(pass_chunks[0]) + Password_Segment.get_keyboard_coordinate(pass_chunks[0])
+        prefix = "😀" * self.norder
+        next_segment = Password_Segment(prefix, 0, 0).processed_segment
+        self.feature_label.append(
+                (encoded_next_char, next_segment)
+        )
+        count = 1
+        if __debug__: print("Entering loop")
+        its = len(pass_chunks) - 1
+        for i in range(its):
+            if __debug__: print(f"In loop on {pass_chunks[i]}")
+            if len(pass_chunks[i]) < self.norder:
+                prefix = "😀" * (self.norder - len(pass_chunks[i]))
+            else:
+                prefix = ""
 
-        # Add segments of n-order length from beginning to end of password
-        while end < len(self.password):
-            if __debug__:
-                print(f"Length of password is {len(self.password)}")
-            if __debug__:
-                print(f"Looping again with {begin} and {end}")
-            if begin < 0:
-                prefix = "😀" * abs(begin)
-                next_char = (
-                    self.password[-1] if begin == -1 else self.password[: begin + 1][-1]
-                )
-                word = prefix + self.password[:begin]
-                if len(word) > self.norder:
-                    word = word[:self.norder]
-                encoded_next_char = Password_Segment.get_type_and_rank(next_char) + Password_Segment.get_keyboard_coordinate(next_char)
-                if begin == (0 - len(self.password)):
-                    next_segment = Password_Segment(word, 0, 0).processed_segment
-                    while len(next_segment) < 7:
-                        next_segment = [(0,0,0,0)].extend(next_segment)
-                else:
-                    next_segment = Password_Segment(
-                        word,
-                        len(self.password[:begin]) - 1,
-                        self._find_streaks(end - 1),
-                    ).processed_segment
-                    while len(next_segment) < 7:
-                        next_segment = [(0,0,0,0)].extend(next_segment)
-                self.feature_label.append((encoded_next_char, next_segment))
-            elif len(self.password) > self.norder:
-                next_char = self.password[end]
-                encoded_next_char = Password_Segment.get_type_and_rank(next_char) + Password_Segment.get_keyboard_coordinate(next_char)
-                next_segment = Password_Segment(
-                    self.password[begin:end], end, self._find_streaks(end - 1)
-                ).processed_segment
-                while len(next_segment) < 7:
-                    next_segment = [(0,0,0,0)].extend(next_segment)
-                self.feature_label.append((encoded_next_char, next_segment))
-            begin += 1
-            end += 1
-            if __debug__:
-                print(f"Now begin is {begin} and end is {end}")
+            encoded_next_char = Password_Segment.get_type_and_rank(pass_chunks[i + 1][-1]) + Password_Segment.get_keyboard_coordinate(pass_chunks[i + 1][-1])
+            next_segment = Password_Segment(prefix + pass_chunks[i], count, self._find_streaks(count - 1)).processed_segment
+            assert(len(next_segment), 7)
+            self.feature_label.append(
+                (encoded_next_char, next_segment)
+            )
+            count += 1
 
         self.feature_label.append(
-            (
-                [-1, -1, -1, -1],
-                Password_Segment(
-                    self.password[begin:end], end, self._find_streaks(end - 1)
-                ).processed_segment,
-            )
-        )
+            ([-1,-1,-1,-1],
+             Password_Segment(pass_chunks[-1], count, self._find_streaks(count - 1)).processed_segment)
+        ) 
 
     def get_array(self):
         return self.feature_label
-
-
-def get_ascii(iterable):
-    for line in iterable:
-        try:
-            yield line.decode("ASCII")
-        except UnicodeDecodeError:
-            pass
-
-# password = input("password: ")
-parser = argparse.ArgumentParser(
-    prog="preprocess",
-    description="This encodes ascii password lists for training in RFGuess",
-)
-parser.add_argument("input")
-parser.add_argument("norder", type=int),
-parser.add_argument("-o", "--output", default="output.csv")
-args = parser.parse_args()
-# filename = input("filename: ")
-# norder = int(input("n-order: "))
-
-# test = Password(password, norder)
-# for seg in test.password_segments:
-#    print(seg.processed_segment)
-#    print(json.dumps(seg.processed_segment))
-features = {}
-labels = {}
-print(f"Encoding file {args.input}...")
-with open(args.input, "rb") as password_dump:
-    count = sum(1 for _ in password_dump)
-with open(args.input, "rb") as password_dump:
-    for line in tqdm(get_ascii(password_dump), desc="Encoding", total=count):
-        if __debug__:
-            print(f"Adding password: {line.strip()}")
-        try:
-            if not line.strip():
-                continue
-            current = Password(line.strip(), args.norder)
-            lab_builder = []
-            feat_builder = []
-            for lab, feat in current.get_array():
-                lab_builder.append(lab)
-                feat_builder.append(feat)
-            features[line.strip()] = feat_builder
-            labels[line.strip()] = lab_builder
-        except TypeError:
-            continue
-
-with open(f"{args.output}.feature", 'w') as output_file:
-    print(f"Writing features to {args.output}.features")
-    json.dump(features, output_file, indent=4, ensure_ascii=True)
-    # output_file.write(json.dumps(features))
-
-with open(f"{args.output}.label", 'w') as output_file:
-    print(f"Writing labels to {args.output}.labels")
-    json.dump(labels, output_file, indent=4, ensure_ascii=True)
-# There are no tuples in JSON so this saves as lists of lists
-# print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
-# print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
-# with open(f"{filename}.pkl", 'wb') as pickle_file:
-#    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
-# print(passwords)
-
-with open(f"{args.output}.csv" ,'w') as csv_file:
-    csv_file.write("features|labels\n")
-    for k in features:
-        for i in range(len(features[k])):
-            unpack_tuple = [element for tupl in features[k][i] for element in tupl]
-            feat_str = ', '.join(str(x) for x in unpack_tuple)
-            lab_str = ', '.join(str(x) for x in labels[k][i])
-            csv_file.write("[" + feat_str + "]" + " | " + "[" + lab_str + "]\n")
