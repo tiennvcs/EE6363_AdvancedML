@@ -1,5 +1,6 @@
 import json, os
 import pandas as pd
+import argparse
 
 
 class Dataset:
@@ -31,37 +32,41 @@ class Dataset:
         self._y = []
         # Temporaly ignore these passwords less than 7 characters.
         for passwd_str, encodings in self._raw_data.items():
-            if len(passwd_str) < 7:
-                continue
             k = 0
-            while k < len(passwd_str)-6:
-                self._data.append(
-                    {
-                        'entire_pass': passwd_str,
-                        'start_index_prefix': k,
-                        'input_prefix': passwd_str[k: k+6],
-                        'input_encoding': encodings[k],
-                        'flatten_input_encoding': [x for sub_encode in encodings[k] for x in sub_encode],
-                        'next_char': passwd_str[k+6],
-                        'label': self._label_map[passwd_str[k+6]]
-                    }
-                )
-                k += 1
-            # At the end, add the end character.
-            self._data.append(
-                {
+            while k <= len(passwd_str)-1:
+                sample = {
                     'entire_pass': passwd_str,
-                    'start_index_prefix': k,
-                    'input_prefix': passwd_str[k: k+6],
-                    'input_encoding': encodings[k],
-                    'flatten_input_encoding': [x for sub_encode in encodings[k] for x in sub_encode],
+                    'label_index': k,
+                    'input_prefix': passwd_str[:k] if k <= 5 else passwd_str[k-6:k],
+                    'input_encoding': encodings[k][-7:] if len(encodings[k]) >= 8 else [encodings[k][0]]*(7-len(encodings))+encodings[k],
+                    'flatten_input_encoding': None,
+                    'next_char': passwd_str[k],
+                    'label': self._label_map[passwd_str[k]]
+                }
+                sample['flatten_input_encoding'] = [x for sub_encode in sample['input_encoding'] for x in sub_encode]
+                if len(sample['input_encoding']) != 7 or len(sample['flatten_input_encoding']) != 26:
+                    print(sample)
+                    input("wait..")
+                self._data.append(sample)
+                k += 1
+            # At the end, add the ending character.
+            final_sample = {
+                    'entire_pass': passwd_str,
+                    'label_index': k,
+                    'input_prefix': passwd_str[:k] if k <= 5 else passwd_str[k-6:k],
+                    'input_encoding': encodings[k][-7:] if len(encodings[k]) >= 8 else [encodings[k][0]]*(7-len(encodings))+encodings[k],
+                    'flatten_input_encoding': None,
                     'next_char': 'Es',
                     'label': self._label_map['Es']
-                }
-            )
+            }
+            final_sample['flatten_input_encoding'] = [x for sub_encode in final_sample['input_encoding'] for x in sub_encode]
+            self._data.append(final_sample)
         self._X = [x['flatten_input_encoding'] for x in self._data]
+        for x in self._X:
+            if len(x) != 26:
+                print(x)
         self._y = [x['label'] for x in self._data]
-        
+
     def save_to_csv(self, data_file, entire_data=False):
         if entire_data:
             df = pd.DataFrame(self._data)
@@ -76,14 +81,20 @@ class Dataset:
         df.to_csv(data_file, index=False)
 
 
+def get_argument():
+
+
 if __name__ == '__main__':
-    data_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/output/encoded_password.json'
+    # data_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/output/encoded_password.json'
+    data_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/preprocess/feature_output.json'
     label_mapping_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping.json'
     label_mapping_invert_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping_invert.json'
-    output_data_folder = './data/output/'
+    output_data_folder = './output/output_test/'
+    os.makedirs(output_data_folder, exist_ok=True)
     entire_data_file = os.path.join(output_data_folder, 'entire.csv')
     feature_data_file = os.path.join(output_data_folder, 'feature.csv')
     dataloader = Dataset(data_file=data_path, label_map_path=label_mapping_path, label_map_invert_path=label_mapping_invert_path)
     dataloader.load_data_from_json()
     dataloader.process_data()
+    dataloader.save_to_csv(data_file=feature_data_file, entire_data=False)
     dataloader.save_to_csv(data_file=entire_data_file, entire_data=True)
