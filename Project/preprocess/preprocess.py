@@ -267,58 +267,59 @@ def get_ascii(iterable):
         except UnicodeDecodeError:
             pass
 
-# password = input("password: ")
-parser = argparse.ArgumentParser(
-    prog="preprocess",
-    description="This encodes ascii password lists for training in RFGuess",
-)
-parser.add_argument("input")
-parser.add_argument("norder", type=int),
-parser.add_argument("-o", "--output_dir", default="/home/tiennv/Github/EE6363_AdvancedML/Project/preprocess/processed_datasets")
-args = parser.parse_args()
-# filename = input("filename: ")
-# norder = int(input("n-order: "))
+if __name__ == '__main__':
+    # password = input("password: ")
+    parser = argparse.ArgumentParser(
+        prog="preprocess",
+        description="This encodes ascii password lists for training in RFGuess",
+    )
+    parser.add_argument("input")
+    parser.add_argument("norder", type=int),
+    parser.add_argument("-o", "--output_dir", default="/home/tiennv/Github/EE6363_AdvancedML/Project/preprocess/processed_datasets")
+    args = parser.parse_args()
+    # filename = input("filename: ")
+    # norder = int(input("n-order: "))
 
-# test = Password(password, norder)
-# for seg in test.password_segments:
-#    print(seg.processed_segment)
-#    print(json.dumps(seg.processed_segment))
-features = {}
-labels = {}
-print(f"Encoding file {args.input}...")
-with open(args.input, "rb") as password_dump:
-    count = sum(1 for _ in password_dump)
-with open(args.input, "rb") as password_dump:
-    for line in tqdm(get_ascii(password_dump), desc="Encoding", total=count):
-        if __debug__:
-            print(f"Adding password: {line.strip()}")
-        try:
-            if not line.strip():
+    # test = Password(password, norder)
+    # for seg in test.password_segments:
+    #    print(seg.processed_segment)
+    #    print(json.dumps(seg.processed_segment))
+    features = {}
+    labels = {}
+    print(f"Encoding file {args.input}...")
+    with open(args.input, "rb") as password_dump:
+        count = sum(1 for _ in password_dump)
+    with open(args.input, "rb") as password_dump:
+        for line in tqdm(get_ascii(password_dump), desc="Encoding", total=count):
+            if __debug__:
+                print(f"Adding password: {line.strip()}")
+            try:
+                if not line.strip():
+                    continue
+                current = Password(line.strip(), args.norder)
+                lab_builder = []
+                feat_builder = []
+                for lab, feat in current.get_array():
+                    lab_builder.append(lab)
+                    feat_builder.append(feat)
+                features[line.strip()] = feat_builder
+                labels[line.strip()] = lab_builder
+            except TypeError:
                 continue
-            current = Password(line.strip(), args.norder)
-            lab_builder = []
-            feat_builder = []
-            for lab, feat in current.get_array():
-                lab_builder.append(lab)
-                feat_builder.append(feat)
-            features[line.strip()] = feat_builder
-            labels[line.strip()] = lab_builder
-        except TypeError:
-            continue
 
-output_file_feature = os.path.join(args.output_dir, os.path.basename(args.input).split(".")[0]+'.json')
-with open(output_file_feature, 'w') as f:
-    print(f"Writing features to {output_file_feature}")
-    json.dump(features, f, indent=4, ensure_ascii=False)
-    # output_file.write(json.dumps(features))
+    output_file_feature = os.path.join(args.output_dir, os.path.basename(args.input).split(".")[0]+'.json')
+    with open(output_file_feature, 'w') as f:
+        print(f"Writing features to {output_file_feature}")
+        json.dump(features, f, indent=4, ensure_ascii=False)
+        # output_file.write(json.dumps(features))
 
-output_file_label = os.path.join(args.output_dir, os.path.basename(args.input).split(".")[0]+'.label.json')
-with open(output_file_label, 'w') as f:
-    print(f"Writing labels to {output_file_label}")
-    json.dump(labels, f, indent=4, ensure_ascii=False)
-# There are no tuples in JSON so this saves as lists of lists
-# print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
-# print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
-# with open(f"{filename}.pkl", 'wb') as pickle_file:
-#    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
-# print(passwords)
+    output_file_label = os.path.join(args.output_dir, os.path.basename(args.input).split(".")[0]+'.label.json')
+    with open(output_file_label, 'w') as f:
+        print(f"Writing labels to {output_file_label}")
+        json.dump(labels, f, indent=4, ensure_ascii=False)
+    # There are no tuples in JSON so this saves as lists of lists
+    # print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
+    # print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
+    # with open(f"{filename}.pkl", 'wb') as pickle_file:
+    #    pickle.dump(passwords, pickle_file) # Use this to create a pickle file that saves the Python objects as bytes and can be easily imported
+    # print(passwords)
