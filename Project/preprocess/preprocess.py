@@ -305,13 +305,14 @@ with open(args.input, "rb") as password_dump:
         except TypeError:
             continue
 
-with open(f"{args.output}.features", 'w') as output_file:
-    print(f"Writing features to {args.output}.features")
-    output_file.write(json.dumps(features))
+with open(f"feature_{args.output}", 'w') as output_file:
+    print(f"Writing features to features_{args.output}")
+    json.dump(features, output_file, indent=4, ensure_ascii=False)
+    # output_file.write(json.dumps(features))
 
-with open(f"{args.output}.labels", 'w') as output_file:
-    print(f"Writing labels to {args.output}.labels")
-    output_file.write(json.dumps(labels))
+with open(f"label_{args.output}", 'w') as output_file:
+    print(f"Writing labels to labels_{args.output}")
+    json.dump(labels, output_file, indent=4, ensure_ascii=False)
 # There are no tuples in JSON so this saves as lists of lists
 # print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
 # print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
