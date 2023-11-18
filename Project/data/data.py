@@ -3,6 +3,10 @@ import pandas as pd
 import argparse
 
 
+label_mapping_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping.json'
+label_mapping_invert_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping_invert.json'
+
+
 class Dataset:
     def __init__(self, data_file: str, label_map_path: str, label_map_invert_path: str):
         self._data_path = data_file
@@ -82,18 +86,19 @@ class Dataset:
 
 
 def get_argument():
+    args = argparse.ArgumentParser(description="Data processing to get feature")
+    args.add_argument("--data_path", required=True, type=str, help="The json data path to target processed data")
+    args.add_argument("--output_dir", default="/home/tiennv/Github/EE6363_AdvancedML/Project/data/output", type=str)
+    return vars(args.parse_args())
 
 
 if __name__ == '__main__':
     # data_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/output/encoded_password.json'
-    data_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/preprocess/feature_output.json'
-    label_mapping_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping.json'
-    label_mapping_invert_path = '/home/tiennv/Github/EE6363_AdvancedML/Project/data/label_mapping_invert.json'
-    output_data_folder = './output/output_test/'
-    os.makedirs(output_data_folder, exist_ok=True)
-    entire_data_file = os.path.join(output_data_folder, 'entire.csv')
-    feature_data_file = os.path.join(output_data_folder, 'feature.csv')
-    dataloader = Dataset(data_file=data_path, label_map_path=label_mapping_path, label_map_invert_path=label_mapping_invert_path)
+    args = get_argument()    
+    os.makedirs(args['output_dir'], exist_ok=True)
+    entire_data_file = os.path.join(args['output_dir'], os.path.basename(args['data_path']).split(".")[0]+'_entire.csv')
+    feature_data_file = os.path.join(args['output_dir'], os.path.basename(args['data_path']).split(".")[0]+'_feature.csv')
+    dataloader = Dataset(data_file=args['data_path'], label_map_path=label_mapping_path, label_map_invert_path=label_mapping_invert_path)
     dataloader.load_data_from_json()
     dataloader.process_data()
     dataloader.save_to_csv(data_file=feature_data_file, entire_data=False)

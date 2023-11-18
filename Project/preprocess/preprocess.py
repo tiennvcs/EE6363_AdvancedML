@@ -1,3 +1,4 @@
+import os
 import string, json, pickle, argparse, sys
 from tqdm import tqdm
 
@@ -273,7 +274,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("input")
 parser.add_argument("norder", type=int),
-parser.add_argument("-o", "--output", default="output.csv")
+parser.add_argument("-o", "--output_dir", default="/home/tiennv/Github/EE6363_AdvancedML/Project/preprocess/processed_datasets")
 args = parser.parse_args()
 # filename = input("filename: ")
 # norder = int(input("n-order: "))
@@ -305,14 +306,16 @@ with open(args.input, "rb") as password_dump:
         except TypeError:
             continue
 
-with open(f"feature_{args.output}", 'w') as output_file:
-    print(f"Writing features to features_{args.output}")
-    json.dump(features, output_file, indent=4, ensure_ascii=False)
+output_file_feature = os.path.join(args.output_dir, os.path.basename(args.input).split(".")[0]+'.json')
+with open(output_file_feature, 'w') as f:
+    print(f"Writing features to {output_file_feature}")
+    json.dump(features, f, indent=4, ensure_ascii=False)
     # output_file.write(json.dumps(features))
 
-with open(f"label_{args.output}", 'w') as output_file:
-    print(f"Writing labels to labels_{args.output}")
-    json.dump(labels, output_file, indent=4, ensure_ascii=False)
+output_file_label = os.path.join(args.output_dir, os.path.basename(args.input).split(".")[0]+'.label.json')
+with open(output_file_label, 'w') as f:
+    print(f"Writing labels to {output_file_label}")
+    json.dump(labels, f, indent=4, ensure_ascii=False)
 # There are no tuples in JSON so this saves as lists of lists
 # print(json.dumps(passwords) # Use this to print ugly, machine-friendly JSON
 # print(json.dumps(passwords, indent=4, sort_keys=True)) # Uncomment this if you want the JSON output to look pretty
