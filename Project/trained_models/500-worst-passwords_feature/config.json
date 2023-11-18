@@ -1,0 +1,6 @@
+{
+    "data_input": "/home/tiennv/Github/EE6363_AdvancedML/Project/data/output/500-worst-passwords_feature.csv",
+    "output_dir": "./trained_models/",
+    "max_depth": 10,
+    "test_size": 0.2
+}

@@ -1,8 +1,13 @@
+import argparse
+import json
+import os
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 import time
 from sklearn.model_selection import train_test_split
 from joblib import dump
+
+random_state = 2000
 
 
 def load_dataset(data_file: str):
@@ -21,21 +26,21 @@ def create_classifer(max_depth=5, random_state=None):
     return model
 
 
-def run(data_file, max_depth, random_state, test_size):
+def run(args):
     # Load dataset
     print("Loading dataset ...")
-    X, y = load_dataset(data_file=data_file)
+    X, y = load_dataset(data_file=args['data_input'])
     print("\t--> Number of samples: {}".format(len(X)))
 
     # Initilize clasifier
     print("Creating classifier ...")
-    model = create_classifer(max_depth=max_depth, random_state=random_state)
+    model = create_classifer(max_depth=args['max_depth'], random_state=random_state)
     print("\t--> Model configuratio: {}".format(model))
 
     # Split dataset into training and testset
     print("Spiting dataset ...")
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, shuffle=True, random_state=random_state
+        X, y, test_size=args['test_size'], shuffle=True, random_state=random_state
     )
     print("\t--> Training sample num: {}, testing sample num: {}".format(len(X_train), len(X_test)))
 
@@ -52,15 +57,27 @@ def run(data_file, max_depth, random_state, test_size):
     print("\t--> Train acc: {}, test acc: {}".format(train_score, test_score))
 
     # Save model to disk
-    dump(model, 'model.joblib')
+    output_model_folder = os.path.join(args['output_dir'], os.path.basename(args['data_input']).split(".")[0])
+    os.makedirs(output_model_folder, exist_ok=True)
+    output_model_file = os.path.join(output_model_folder, 'model.joblib')
+    dump(model, output_model_file)
+    output_score_file = os.path.join(output_model_folder, 'score.json')
+    with open(output_score_file, 'w') as f:
+        json.dump({'train': train_score, 'test': test_score}, f, indent=4, ensure_ascii=False)
+    output_config_file = os.path.join(output_model_folder, 'config.json')
+    with open(output_config_file, 'w') as f:
+        json.dump(args, f, indent=4, ensure_ascii=False)
     
 
-
+def get_argument():
+    args = argparse.ArgumentParser(description="Data processing to get feature")
+    args.add_argument("--data_input", required=True, type=str, help="The json data path to target processed data")
+    args.add_argument("--output_dir", default="/home/tiennv/Github/EE6363_AdvancedML/Project/data/output", type=str)
+    args.add_argument("--max_depth", default=5, type=int)
+    args.add_argument("--test_size", default=0.2, type=float)
+    return vars(args.parse_args())
 
 
 if __name__ == '__main__':
-    data_file = './data/output/feature.csv'
-    max_depth = 20
-    random_state = 1000
-    test_size =  0.2
-    run(data_file, max_depth, random_state, test_size)
+    args = get_argument()
+    run(args)
