@@ -186,7 +186,7 @@ def evaluation(args):
     # Save metric evaluation
     saving_score_file = os.path.join(args['output_dir'], 'score.json')
     with open(saving_score_file, 'w', encoding='utf-8') as f:
-        json.dump({'acc': acc, 'speed': inference_speed, 'total_samples': len(X)}, f, indent=4, ensure_ascii=False)
+        json.dump({'success_rate': success_rate, 'speed': speed_time, 'total_samples': len(X)}, f, indent=4, ensure_ascii=False)
     # Plot curve
 
 
