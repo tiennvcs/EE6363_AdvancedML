@@ -20,7 +20,10 @@ def load_dataset(data_file: str):
 
 def create_classifer(max_depth=5, random_state=None):
     model = RandomForestClassifier(
-        max_depth=max_depth,
+        max_features=0.8, 
+        min_samples_leaf=10, 
+        n_estimators=30,
+        # max_depth=max_depth,
         random_state=random_state,
     )
     return model

@@ -267,6 +267,7 @@ def get_ascii(iterable):
         except UnicodeDecodeError:
             pass
 
+
 if __name__ == '__main__':
     # password = input("password: ")
     parser = argparse.ArgumentParser(

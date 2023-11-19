@@ -140,31 +140,39 @@ def evaluation(args):
     X, y_true = load_entire_dataset(data_file=args['test'])
 
     # Make inference
-    L = 5
+    L = 100
     success_rate = []
     total_guess = []
-    y_pred_total = []
-    for _ in range(1, L+1):
-        output = generator.inference(inputs=X)
-        y_pred = set(output['y_pred'])
-        y_pred_total += list(y_pred)
-        y_pred_total = list(set(y_pred_total))
-        print("Length of current prediction set:", len(y_pred_total))
-        input()
-        acc = metric_acc2(y_pred=y_pred_total, y_true=y_true)
-    
-        total_guess.append(len(y_pred_total)) # ->x
-        success_rate.append(acc)              # ->y
+    speed = []
+    # y_pred_total = []
+    for l in tqdm(range(1, L+1)):
+        portion_X = X[:int(l/L*len(X))]
+        output = generator.inference(inputs=portion_X)
+        y_pred, speed_time = output['y_pred'], output['speed_inference']
+        # y_pred_total.extend(y_pred)
+        # y_pred_total = list(set(y_pred_total))
+        acc = metric_acc2(y_pred=y_pred, y_true=y_true)
+        total_guess.append(len(y_pred)) # ->x
+        success_rate.append(acc)        # ->y
+        speed.append(speed_time)
         # Perform evaluation
         print("The successful rate is: {}%".format(np.round(acc*100, 4)))
-            # inference_speed = output['speed_inference']   
+        print("The inference time is: {} sample/second".format(np.round(speed_time, 4)))
 
     # Plot 
     fig, ax = plt.subplots()
     ax.plot(total_guess, success_rate, label="Successful rate")
     ax.legend(loc='best')
-    plt.show()
-    fig.savefig(args['output_dir'], os.path.basename(args['test']).split(".")[0]+".pdf")
+    ax.set_ylabel("Fraction of successfully cracked", fontsize=14)
+    ax.set_xlabel("Guess number", fontsize=14)
+    fig.savefig(os.path.join(args['output_dir'], os.path.basename(args['test']).split(".")[0]+"_crack.pdf"))
+
+    fig, ax = plt.subplots()
+    ax.plot(total_guess, speed, label="Time inference")
+    ax.legend(loc='best')
+    ax.set_ylabel("Running time average per guess", fontsize=14)
+    ax.set_xlabel("Guess number", fontsize=14)
+    fig.savefig(os.path.join(args['output_dir'], os.path.basename(args['test']).split(".")[0]+"_speed.pdf"))
 
     # Save prediction and true label
     df = pd.DataFrame({
