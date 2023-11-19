@@ -259,7 +259,7 @@ class User:
         self.username_string = username
         self.password_string = password
 
-        unflattened_username = Password_Segment(username, 0, 0).processed_segment[6:]
+        unflattened_username = Password_Segment(username[:6], 0, 0).processed_segment
         flattened_username = [element for tupl in unflattened_username for element in tupl]
         self.username_encoded = flattened_username
         self.password_encoded = Password(password, norder, prefix=self.username_encoded)
