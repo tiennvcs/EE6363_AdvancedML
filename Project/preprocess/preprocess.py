@@ -139,8 +139,9 @@ class Password:
     This class holds all processed password segments for a single password.
     """
 
-    def __init__(self, password, norder):
+    def __init__(self, password, norder, prefix=None):
         self.password = password
+        self.prefix = prefix
         self.norder = norder
         self.feature_label = []
         # If the password's length is equal or less than the order, we can just process the entire password as a single segment
@@ -217,6 +218,8 @@ class Password:
         encoded_next_char = Password_Segment.get_type_and_rank(pass_chunks[0]) + Password_Segment.get_keyboard_coordinate(pass_chunks[0])
         prefix = "😀" * self.norder
         next_segment = Password_Segment(prefix, 0, 0).processed_segment
+        if self.prefix:
+            next_segment.insert(0, self.prefix)
         self.feature_label.append(
                 (encoded_next_char, next_segment)
         )
@@ -232,16 +235,35 @@ class Password:
 
             encoded_next_char = Password_Segment.get_type_and_rank(pass_chunks[i + 1][-1]) + Password_Segment.get_keyboard_coordinate(pass_chunks[i + 1][-1])
             next_segment = Password_Segment(prefix + pass_chunks[i], count, self._find_streaks(count - 1)).processed_segment
-            assert(len(next_segment), 7)
+            if self.prefix:
+                next_segment.insert(0, self.prefix)
+            #assert(len(next_segment), 7)
             self.feature_label.append(
                 (encoded_next_char, next_segment)
             )
             count += 1
-
+        
+        next_segment = Password_Segment(pass_chunks[-1], count, self._find_streaks(count - 1)).processed_segment
+        if self.prefix:
+            next_segment.insert(0, self.prefix)
         self.feature_label.append(
             ([-1,-1,-1,-1],
-             Password_Segment(pass_chunks[-1], count, self._find_streaks(count - 1)).processed_segment)
-        ) 
+             next_segment) 
+        )
 
     def get_array(self):
         return self.feature_label
+
+class User:
+    def __init__(self, username, password, norder):
+        self.username_string = username
+        self.password_string = password
+
+        unflattened_username = Password_Segment(username, 0, 0).processed_segment[6:]
+        flattened_username = [element for tupl in unflattened_username for element in tupl]
+        self.username_encoded = flattened_username
+        self.password_encoded = Password(password, norder, prefix=self.username_encoded)
+
+    def get_array(self):
+        return self.password_encoded.feature_label
+
